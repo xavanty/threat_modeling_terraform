@@ -74,7 +74,7 @@ const extractAndParseJson = (text) => {
 // Multer setup for handling file uploads in memory
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 // Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, 'dist')));
