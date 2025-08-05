@@ -1,0 +1,7 @@
+{
+  "name": "IA Threat Modeling",
+  "description": "Uma aplicação alimentada por IA que analisa descrições e diagramas de arquitetura de sistemas para identificar potenciais ameaças de segurança. Utiliza a metodologia STRIDE e considera o tipo de aplicação e a classificação dos dados para uma análise mais precisa.",
+  "requestFramePermissions": [],
+  "prompt": "",
+  "env": []
+}

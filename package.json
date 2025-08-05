@@ -1,0 +1,36 @@
+{
+  "name": "ia-threat-modeling",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm:start\" \"dotenv -e .env -- vite\"",
+    "build": "vite build",
+    "start": "node -r dotenv/config server.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.583.0",
+    "@aws-sdk/client-dynamodb": "^3.583.0",
+    "@aws-sdk/client-s3": "^3.583.0",
+    "@aws-sdk/lib-dynamodb": "^3.583.0",
+    "@aws-sdk/s3-request-presigner": "^3.583.0",
+    "dotenv": "^17.2.1",
+    "express": "^4.19.2",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1",
+    "lucide-react": "^0.534.0",
+    "multer": "^1.4.5-lts.1",
+    "multer-s3": "^3.0.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "concurrently": "^9.2.0",
+    "dotenv-cli": "^10.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}
