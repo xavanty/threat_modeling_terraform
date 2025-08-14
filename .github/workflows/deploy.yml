@@ -5,44 +5,88 @@ on:
     branches:
       - main
 
+env:
+  AWS_REGION: us-east-1
+  APP_NAME: ia-threat-modeling
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Cache Node.js modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install dependencies
-        run: npm install
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Get ECR repository URL
+        id: get-ecr-url
+        run: |
+          ECR_URL=$(aws ecr describe-repositories --repository-names ${{ env.APP_NAME }} --query 'repositories[0].repositoryUri' --output text 2>/dev/null || echo "")
+          if [ -z "$ECR_URL" ]; then
+            echo "ECR repository not found. Creating infrastructure first..."
+            echo "ecr_exists=false" >> $GITHUB_OUTPUT
+          else
+            echo "ecr_url=$ECR_URL" >> $GITHUB_OUTPUT
+            echo "ecr_exists=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        if: steps.get-ecr-url.outputs.ecr_exists == 'false'
+        uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
+        if: steps.get-ecr-url.outputs.ecr_exists == 'false'
         run: terraform init
         working-directory: ./terraform
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var="github_connection_arn=${{ secrets.GITHUB_CONNECTION_ARN }}" -var="github_repo=${{ github.repository }}"
+        if: steps.get-ecr-url.outputs.ecr_exists == 'false'
+        run: terraform apply -auto-approve
         working-directory: ./terraform
+
+      - name: Get ECR URL after creation
+        if: steps.get-ecr-url.outputs.ecr_exists == 'false'
+        id: get-new-ecr-url
+        run: |
+          ECR_URL=$(aws ecr describe-repositories --repository-names ${{ env.APP_NAME }} --query 'repositories[0].repositoryUri' --output text)
+          echo "ecr_url=$ECR_URL" >> $GITHUB_OUTPUT
+
+      - name: Set ECR URL
+        id: set-ecr-url
+        run: |
+          if [ "${{ steps.get-ecr-url.outputs.ecr_exists }}" == "true" ]; then
+            echo "ecr_url=${{ steps.get-ecr-url.outputs.ecr_url }}" >> $GITHUB_OUTPUT
+          else
+            echo "ecr_url=${{ steps.get-new-ecr-url.outputs.ecr_url }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build, tag, and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.APP_NAME }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Update App Runner service
+        run: |
+          SERVICE_ARN=$(aws apprunner list-services --query "ServiceSummaryList[?ServiceName=='${{ env.APP_NAME }}'].ServiceArn" --output text)
+          if [ -n "$SERVICE_ARN" ]; then
+            aws apprunner start-deployment --service-arn $SERVICE_ARN
+            echo "App Runner deployment started for service: $SERVICE_ARN"
+          else
+            echo "App Runner service not found. Please run terraform apply to create it."
+          fi

@@ -23,14 +23,10 @@ variable "app_name" {
   default     = "ia-threat-modeling"
 }
 
-variable "github_connection_arn" {
-  description = "The ARN of the AWS CodeStar connection to GitHub."
+variable "image_tag" {
+  description = "The Docker image tag to deploy."
   type        = string
-}
-
-variable "github_repo" {
-  description = "The GitHub repository to deploy from."
-  type        = string
+  default     = "latest"
 }
 
 # S3 Bucket for storing uploaded images
@@ -124,22 +120,33 @@ resource "aws_iam_role_policy_attachment" "app_permissions_attachment" {
   policy_arn = aws_iam_policy.app_permissions.arn
 }
 
+# ECR Repository
+resource "aws_ecr_repository" "app" {
+  name                 = var.app_name
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name = var.app_name
+  }
+}
+
 # App Runner Service
 resource "aws_apprunner_service" "main" {
   service_name = var.app_name
 
   source_configuration {
-    authentication_configuration {
-      connection_arn = var.github_connection_arn
-    }
-    code_repository {
-      repository_url = "https://github.com/${var.github_repo}"
-      source_code_version {
-        type  = "BRANCH"
-        value = "main"
+    image_repository {
+      image_identifier      = "${aws_ecr_repository.app.repository_url}:${var.image_tag}"
+      image_configuration {
+        port = "8081"
       }
+      image_repository_type = "ECR"
     }
-    auto_deployments_enabled = true
+    auto_deployments_enabled = false
   }
 
   health_check_configuration {
@@ -172,6 +179,10 @@ resource "random_id" "id" {
 
 output "apprunner_url" {
   value = aws_apprunner_service.main.service_url
+}
+
+output "ecr_repository_url" {
+  value = aws_ecr_repository.app.repository_url
 }
 
 output "s3_bucket_name" {
