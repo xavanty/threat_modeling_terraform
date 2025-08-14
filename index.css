@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+/* Cores customizadas Cielo - aplicação direta */
+.bg-cielo-400 {
+  background-color: #66A3E0 !important;
+}
+
+.bg-cielo-500 {
+  background-color: #0066CC !important;
+}
+
+.bg-cielo-600 {
+  background-color: #0052a3 !important;
+}
+
+.bg-cielo-800 {
+  background-color: #003366 !important;
+}
+
+.hover\:bg-cielo-500:hover {
+  background-color: #0066CC !important;
+}
+
+.hover\:bg-cielo-600:hover {
+  background-color: #0052a3 !important;
+}
+
+.text-cielo-300 {
+  color: #0066CC !important; /* Mudado para azul principal para contrastar com fundo branco */
+}
+
+.text-cielo-400 {
+  color: #66A3E0 !important;
+}
+
+.border-cielo-400 {
+  border-color: #66A3E0 !important;
+}
+
+.border-cielo-500 {
+  border-color: #0066CC !important;
+}
+
+.focus\:ring-cielo-500:focus {
+  --tw-ring-color: #0066CC !important;
+}
+
+.focus\:border-cielo-500:focus {
+  border-color: #0066CC !important;
+}
+
+.hover\:border-cielo-500:hover {
+  border-color: #0066CC !important;
+}
+
+.hover\:text-cielo-400:hover {
+  color: #66A3E0 !important;
+}
+
+/* Ajustes para fundo branco */
+.text-white {
+  color: #1f2937 !important; /* Texto escuro para fundo branco */
+}
+
+.text-gray-200 {
+  color: #1f2937 !important; /* Texto escuro para inputs */
+}
+
+.text-gray-300 {
+  color: #4b5563 !important; /* Texto cinza médio */
+}
+
+.text-gray-400 {
+  color: #6b7280 !important; /* Texto cinza claro */
+}
+
+.bg-gray-800 {
+  background-color: #f9fafb !important; /* Fundo claro para cards */
+  border: 1px solid #e5e7eb !important;
+}
+
+.bg-gray-900 {
+  background-color: #ffffff !important; /* Fundo branco para inputs */
+  border: 1px solid #d1d5db !important;
+}
+
+.border-gray-600 {
+  border-color: #d1d5db !important;
+}
+
+.border-gray-700 {
+  border-color: #e5e7eb !important;
+}

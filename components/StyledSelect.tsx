@@ -15,7 +15,7 @@ const StyledSelect: React.FC<StyledSelectProps> = ({ label, options, translation
       <select
         id={props.id || label}
         {...props}
-        className="w-full p-2.5 bg-gray-900 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full p-2.5 bg-gray-900 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-cielo-500 focus:border-cielo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {options.map((option) => (
           <option key={option} value={option}>

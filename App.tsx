@@ -62,6 +62,51 @@ const App: React.FC = () => {
     setCurrentView('analysis');
   };
 
+  const compressImage = (file: File, quality: number = 0.7): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 1920x1080 to reduce payload size)
+        let { width, height } = img;
+        const maxWidth = 1920;
+        const maxHeight = 1080;
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width *= ratio;
+          height *= ratio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              reject(new Error('Failed to compress image'));
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -79,8 +124,9 @@ const App: React.FC = () => {
       if (currentStep === AnalysisStep.INPUT) {
         let imagePayload: { mimeType: string; data: string } | undefined = undefined;
         if (imageFile) {
-          const base64Data = await fileToBase64(imageFile);
-          imagePayload = { mimeType: imageFile.type, data: base64Data };
+          const compressedFile = await compressImage(imageFile);
+          const base64Data = await fileToBase64(compressedFile);
+          imagePayload = { mimeType: compressedFile.type, data: base64Data };
         }
         const result = await generateArchitectureDescription(architectureDescription, appType, dataClassification, imagePayload);
         setAiDescription(result);
@@ -88,8 +134,9 @@ const App: React.FC = () => {
       } else if (currentStep === AnalysisStep.REVIEW_DESCRIPTION) {
         let imagePayload: { mimeType: string; data: string } | undefined = undefined;
         if (imageFile) {
-          const base64Data = await fileToBase64(imageFile);
-          imagePayload = { mimeType: imageFile.type, data: base64Data };
+          const compressedFile = await compressImage(imageFile);
+          const base64Data = await fileToBase64(compressedFile);
+          imagePayload = { mimeType: compressedFile.type, data: base64Data };
         }
         const result = await generateDfd(aiDescription, imagePayload);
         setDfdDescription(result);
@@ -352,10 +399,11 @@ const App: React.FC = () => {
   const Header: React.FC = () => (
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 w-full">
         <div className='flex items-center gap-4'>
-            <div className="bg-indigo-600 p-3 rounded-lg"><ShieldCheck className="w-8 h-8 text-white"/></div>
+            <img src="/cielo_NEG_RGB-01.png" alt="Cielo" className="h-12 w-auto" />
+            <div className="bg-cielo-400 p-3 rounded-lg"><ShieldCheck className="w-8 h-8 text-white"/></div>
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">IA Threat Modeling</h1>
-              <p className="text-indigo-300">Análise de Segurança de Arquitetura Automatizada</p>
+              <p className="text-cielo-300">Análise de Segurança de Arquitetura Automatizada</p>
             </div>
         </div>
       </header>
@@ -373,7 +421,7 @@ const App: React.FC = () => {
         if (currentStep === AnalysisStep.RESULTS) {
           return (
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                <button onClick={handleSaveAndReturn} disabled={isLoading} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-200 disabled:bg-indigo-900 disabled:cursor-not-allowed">
+                <button onClick={handleSaveAndReturn} disabled={isLoading} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-cielo-400 text-white font-semibold rounded-lg shadow-md hover:bg-cielo-500 transition-all duration-200 disabled:bg-cielo-800 disabled:cursor-not-allowed">
                     {isLoading ? <Loader /> : <Download className="w-5 h-5"/>}
                     Salvar e Voltar ao Painel
                 </button>
@@ -400,7 +448,7 @@ const App: React.FC = () => {
             <button
               onClick={handlePrimaryAction}
               disabled={currentStep === AnalysisStep.INPUT && !canProceedFromInput}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-indigo-900 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-200"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-cielo-400 text-white font-semibold rounded-lg shadow-md hover:bg-cielo-500 disabled:bg-cielo-800 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-200"
             >
               {isLoading ? <><Loader /> Analisando...</> : primaryButtonTexts[currentStep]}
             </button>
@@ -414,7 +462,7 @@ const App: React.FC = () => {
             <main className="w-full">
             {currentStep === AnalysisStep.INPUT && (
                 <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6">
-                   <button onClick={() => setCurrentView('dashboard')} className="flex items-center gap-2 mb-6 text-sm text-gray-400 font-semibold rounded-lg hover:text-indigo-400 transition-colors">
+                   <button onClick={() => setCurrentView('dashboard')} className="flex items-center gap-2 mb-6 text-sm text-gray-400 font-semibold rounded-lg hover:text-cielo-400 transition-colors">
                       <ArrowLeft className="w-4 h-4" /> Voltar ao Painel
                    </button>
                   <label htmlFor="title" className="block text-lg font-medium text-gray-300 mb-3">Título da Análise</label>
@@ -424,7 +472,7 @@ const App: React.FC = () => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Ex: API de Pagamentos v2"
-                    className="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 placeholder:text-gray-500"
+                    className="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-cielo-500 focus:border-cielo-500 transition duration-200 placeholder:text-gray-500"
                     disabled={isLoading}
                   />
 
@@ -434,7 +482,7 @@ const App: React.FC = () => {
                   <textarea
                     id="architecture-description"
                     rows={6}
-                    className="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200 placeholder:text-gray-500"
+                    className="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-cielo-500 focus:border-cielo-500 transition duration-200 placeholder:text-gray-500"
                     placeholder="Ex: Uma aplicação web com frontend em React, um backend Node.js com Express, e um banco de dados PostgreSQL..."
                     value={architectureDescription}
                     onChange={(e) => setArchitectureDescription(e.target.value)}
@@ -454,7 +502,7 @@ const App: React.FC = () => {
                         </button>
                       </div>
                     ) : (
-                      <label htmlFor="file-upload" className="relative block w-full border-2 border-gray-600 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-indigo-500 transition-colors">
+                      <label htmlFor="file-upload" className="relative block w-full border-2 border-gray-600 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-cielo-500 transition-colors">
                         <div className="flex flex-col items-center justify-center">
                           <UploadCloud className="w-12 h-12 text-gray-500 mb-2" />
                           <span className="block text-sm font-semibold text-gray-400">Clique para enviar ou arraste e solte</span>
@@ -490,7 +538,7 @@ const App: React.FC = () => {
                     {currentStep === AnalysisStep.REVIEW_DESCRIPTION && (
                       <div>
                         <label htmlFor="ai-description" className="block text-lg font-medium text-gray-300 mb-3">Revisar e Confirmar a Descrição da Arquitetura</label>
-                        <textarea id="ai-description" rows={10} value={aiDescription} onChange={e => setAiDescription(e.target.value)} className="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-200" />
+                        <textarea id="ai-description" rows={10} value={aiDescription} onChange={e => setAiDescription(e.target.value)} className="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-cielo-500 focus:border-cielo-500 transition duration-200" />
                       </div>
                     )}
                     {currentStep === AnalysisStep.REVIEW_DFD && (
@@ -509,7 +557,7 @@ const App: React.FC = () => {
                       <Stepper currentStep={currentStep} />
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-6">{title}</h2>
-                    <button onClick={handleBackToDashboard} className="flex items-center gap-2 mb-6 text-sm text-gray-400 font-semibold rounded-lg hover:text-indigo-400 transition-colors">
+                    <button onClick={handleBackToDashboard} className="flex items-center gap-2 mb-6 text-sm text-gray-400 font-semibold rounded-lg hover:text-cielo-400 transition-colors">
                       <ArrowLeft className="w-4 h-4" /> Voltar ao Painel
                     </button>
                     {imagePreview && (
@@ -556,7 +604,7 @@ const App: React.FC = () => {
              <div className="flex justify-center mt-8">
                  <button
                      onClick={handleStartNewAnalysis}
-                     className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-200"
+                     className="flex items-center gap-2 px-5 py-2.5 bg-cielo-400 text-white font-semibold rounded-lg shadow-md hover:bg-cielo-500 transition-all duration-200"
                  >
                      <PlusCircle className="w-5 h-5" />
                      Nova Análise

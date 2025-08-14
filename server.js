@@ -72,9 +72,38 @@ const extractAndParseJson = (text) => {
 
 
 // Multer setup for handling file uploads in memory
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit for file uploads
+    }
+});
 
-app.use(express.json({ limit: '50mb' }));
+// Increase payload limits for JSON requests (especially for base64 images)
+app.use(express.json({ 
+    limit: '50mb' // Use larger limit from remote
+}));
+app.use(express.urlencoded({ 
+    limit: '50mb', 
+    extended: true 
+}));
+
+// Configure server timeout for large payloads
+app.use((req, res, next) => {
+    // Set timeout to 5 minutes for large requests
+    req.setTimeout(300000);
+    res.setTimeout(300000);
+    
+    // Add CORS headers for corporate network compatibility
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 
 // Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, 'dist')));

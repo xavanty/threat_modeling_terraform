@@ -43,7 +43,7 @@ const getStatusStyles = (status: ThreatStatus): string => {
             return 'border-gray-700 bg-gray-800/60 opacity-60 hover:border-gray-600';
         case ThreatStatus.PENDING:
         default:
-            return 'border-gray-700 bg-gray-800/50 hover:border-indigo-600 hover:shadow-indigo-900/40';
+            return 'border-gray-700 bg-gray-800/50 hover:border-cielo-600 hover:shadow-cielo-900/40';
     }
 };
 

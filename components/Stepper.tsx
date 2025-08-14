@@ -13,7 +13,7 @@ const Step: React.FC<StepProps> = ({ icon, title, isCompleted, isActive }) => {
   const getStepClasses = () => {
     let classes = 'flex items-center gap-3 p-3 rounded-lg transition-colors duration-300 ';
     if (isActive) {
-      classes += 'bg-indigo-600/20 border-indigo-500 text-white';
+      classes += 'bg-cielo-500/20 border-cielo-500 text-white';
     } else if (isCompleted) {
       classes += 'bg-gray-700/50 border-gray-600 text-gray-300';
     } else {
@@ -25,7 +25,7 @@ const Step: React.FC<StepProps> = ({ icon, title, isCompleted, isActive }) => {
   return (
     <div className="flex-1">
         <div className={getStepClasses()}>
-            <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${isActive ? 'border-indigo-400' : 'border-gray-500'} ${isCompleted ? 'bg-green-500 border-green-400' : ''}`}>
+            <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${isActive ? 'border-cielo-400' : 'border-gray-500'} ${isCompleted ? 'bg-green-500 border-green-400' : ''}`}>
                 {isCompleted ? <Check className="w-5 h-5 text-white" /> : icon}
             </div>
             <span className="font-semibold">{title}</span>

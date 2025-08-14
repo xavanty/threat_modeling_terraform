@@ -49,11 +49,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAnalysis }) => {
               <button
                 key={analysis.id}
                 onClick={() => onViewAnalysis(analysis)}
-                className="w-full flex items-center justify-between text-left p-4 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700/70 hover:border-indigo-500 transition-all duration-200"
+                className="w-full flex items-center justify-between text-left p-4 bg-gray-800 border border-gray-700 rounded-lg hover:bg-gray-700/70 hover:border-cielo-500 transition-all duration-200"
               >
                 <div>
                   <h3 className="font-semibold text-lg text-white flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-indigo-400" />
+                    <FileText className="w-5 h-5 text-cielo-400" />
                     {analysis.title}
                   </h3>
                   <p className="text-sm text-gray-400 flex items-center gap-2 mt-1">

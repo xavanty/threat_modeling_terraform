@@ -13,6 +13,9 @@ const callBedrockApi = async (prompt: string, expectJson: boolean = false, image
   });
 
   if (!response.ok) {
+    if (response.status === 413) {
+      throw new Error('Imagem muito grande. Tente uma imagem menor ou reduza a qualidade.');
+    }
     const errorBody = await response.json();
     throw new Error(errorBody.error || 'Failed to call Bedrock API');
   }
