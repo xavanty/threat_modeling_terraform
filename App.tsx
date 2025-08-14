@@ -399,7 +399,7 @@ const App: React.FC = () => {
   const Header: React.FC = () => (
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 w-full">
         <div className='flex items-center gap-4'>
-            <img src="/cielo_NEG_RGB-01.png" alt="Cielo" className="h-12 w-auto" />
+            <img src="/cielo_NEG_RGB-01.png" alt="Cielo" className="h-16 w-auto" />
             <div className="bg-cielo-400 p-3 rounded-lg"><ShieldCheck className="w-8 h-8 text-white"/></div>
             <div>
               <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">IA Threat Modeling</h1>
