@@ -56,10 +56,10 @@ const ThreatAnalysisCard: React.FC<ThreatAnalysisCardProps> = ({ threat, onStatu
   const isPending = threat.status === ThreatStatus.PENDING;
 
   return (
-    <div className={`border rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${getStatusStyles(threat.status)}`}>
+    <div className={`border rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${getStatusStyles(threat.status)}`} style={{ backgroundColor: '#ffffff', borderColor: '#374151' }}>
       <div className="p-5">
         <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-3 mb-4">
-          <h3 className="text-xl font-bold text-white leading-tight">{threat.threat_name}</h3>
+          <h3 className="text-xl font-bold leading-tight" style={{ color: '#000000' }}>{threat.threat_name}</h3>
           <div className="flex items-center gap-4">
             {threat.status !== ThreatStatus.PENDING && (
                 <div className={`px-3 py-1 text-sm font-semibold rounded-full ${threat.status === ThreatStatus.ACCEPTED ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
@@ -75,8 +75,8 @@ const ThreatAnalysisCard: React.FC<ThreatAnalysisCardProps> = ({ threat, onStatu
         
         <div className="space-y-4">
             <div>
-                <h4 className="text-sm font-semibold text-gray-400 mb-1">Descrição</h4>
-                <p className="text-gray-300">{threat.description}</p>
+                <h4 className="text-sm font-semibold mb-1" style={{ color: '#6b7280' }}>Descrição</h4>
+                <p style={{ color: '#000000' }}>{threat.description}</p>
             </div>
             
             <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700/80">
@@ -84,7 +84,7 @@ const ThreatAnalysisCard: React.FC<ThreatAnalysisCardProps> = ({ threat, onStatu
                     <ShieldCheck className="w-5 h-5" />
                     Mitigação Recomendada
                 </h4>
-                <p className="text-gray-300">{threat.mitigation}</p>
+                <p style={{ color: '#ffffff' }}>{threat.mitigation}</p>
             </div>
         </div>
 

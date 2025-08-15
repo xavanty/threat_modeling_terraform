@@ -27,8 +27,32 @@ npm run build
 # Build and run with Docker Compose
 docker-compose up --build
 
-# Run with existing AWS credentials mounted
-# App runs on port 8081
+# Run in detached mode
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop containers
+docker-compose down
+
+# Rebuild without cache
+docker-compose build --no-cache
+
+# Run with AWS credentials from environment
+AWS_REGION=us-east-1 \
+DYNAMODB_TABLE_NAME=your-table \
+S3_BUCKET_NAME=your-bucket \
+docker-compose up
+
+# Alternative: Build and run manually
+docker build -t threat-modeling-app .
+docker run -p 8081:8081 \
+  -e AWS_REGION=us-east-1 \
+  -e DYNAMODB_TABLE_NAME=your-table \
+  -e S3_BUCKET_NAME=your-bucket \
+  -v ~/.aws:/home/nodejs/.aws:ro \
+  threat-modeling-app
 ```
 
 ### Testing and Deployment
@@ -86,7 +110,18 @@ This is an AI-powered threat modeling application that generates security analys
 AWS_REGION=us-east-1
 DYNAMODB_TABLE_NAME=ia-threat-modeling-history
 S3_BUCKET_NAME=ia-threat-modeling-uploads-xxxxxxxx
+
+# Optional for Docker (can use IAM roles in production)
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
 ```
+
+### Docker Environment
+- **Image size**: Optimized with multi-stage build and non-root user
+- **Health checks**: Built-in health monitoring on `/health` endpoint  
+- **Resource limits**: 512MB RAM, 0.5 CPU cores maximum
+- **Security**: Runs as non-root user `nodejs` (uid 1001)
+- **AWS credentials**: Mount from `~/.aws` or use environment variables
 
 ### AWS Services Used
 - **Bedrock**: Claude 3 Sonnet model for threat analysis
