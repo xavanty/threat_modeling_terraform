@@ -13,10 +13,13 @@ import StyledSelect from './components/StyledSelect';
 import Stepper from './components/Stepper';
 import Dashboard from './components/Dashboard';
 
-import { AlertTriangle, ShieldCheck, UploadCloud, X, Image as ImageIcon, ArrowLeft, Download, RefreshCw, PlusCircle } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, UploadCloud, X, Image as ImageIcon, ArrowLeft, Download, RefreshCw, PlusCircle, Trash2 } from 'lucide-react';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'dashboard' | 'analysis'>('dashboard');
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
 
   // --- Inputs ---
   const [title, setTitle] = useState<string>('');
@@ -55,6 +58,9 @@ const App: React.FC = () => {
     setDfdDescription('');
     setError(null);
     setIsLoading(false);
+    setCurrentAnalysisId(null);
+    setShowDeleteConfirm(false);
+    setIsDeleting(false);
   }, [imagePreview]);
 
   const handleStartNewAnalysis = () => {
@@ -196,13 +202,42 @@ const App: React.FC = () => {
     setAiDescription(analysis.aiDescription);
     setDfdDescription(analysis.dfdDescription);
     setAnalysisResult(analysis.analysisResult);
+    setCurrentAnalysisId(analysis.id);
     setCurrentStep(AnalysisStep.RESULTS);
     setCurrentView('analysis');
   };
 
   const handleBackToDashboard = () => {
     resetState();
+    setCurrentAnalysisId(null);
     setCurrentView('dashboard');
+  };
+
+  const handleDeleteAnalysis = async () => {
+    if (!currentAnalysisId) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/analyses/${currentAnalysisId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete analysis');
+      }
+
+      setShowDeleteConfirm(false);
+      handleBackToDashboard();
+    } catch (err) {
+      console.error("Failed to delete analysis", err);
+      if (err instanceof Error) {
+        setError(`Falha ao excluir a análise: ${err.message}`);
+      } else {
+        setError("Falha ao excluir a análise. Ocorreu um erro desconhecido.");
+      }
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSaveAndReturn = async () => {
@@ -557,9 +592,20 @@ const App: React.FC = () => {
                       <Stepper currentStep={currentStep} />
                     </div>
                     <h2 className="text-2xl font-bold text-white mb-6">{title}</h2>
-                    <button onClick={handleBackToDashboard} className="flex items-center gap-2 mb-6 text-sm text-gray-400 font-semibold rounded-lg hover:text-cielo-400 transition-colors">
-                      <ArrowLeft className="w-4 h-4" /> Voltar ao Painel
-                    </button>
+                    <div className="flex justify-between items-center mb-6">
+                      <button onClick={handleBackToDashboard} className="flex items-center gap-2 text-sm text-gray-400 font-semibold rounded-lg hover:text-cielo-400 transition-colors">
+                        <ArrowLeft className="w-4 h-4" /> Voltar ao Painel
+                      </button>
+                      {currentAnalysisId && (
+                        <button
+                          onClick={() => setShowDeleteConfirm(true)}
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-red-400 bg-red-900/20 rounded-lg hover:bg-red-900/40 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Excluir Análise
+                        </button>
+                      )}
+                    </div>
                     {imagePreview && (
                       <div className="mb-6">
                         <h3 className="text-xl font-semibold text-gray-300 mb-3">Diagrama de Arquitetura</h3>
@@ -613,6 +659,50 @@ const App: React.FC = () => {
          </div>
       ) : (
         renderAnalysisFlow()
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+          <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 max-w-md w-full mx-4" style={{ backgroundColor: '#1f2937', borderColor: '#374151' }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-red-900/30 rounded-full">
+                <Trash2 className="w-6 h-6 text-red-400" />
+              </div>
+              <h3 className="text-xl font-bold" style={{ color: '#ffffff' }}>Confirmar Exclusão</h3>
+            </div>
+            <p className="mb-6" style={{ color: '#d1d5db' }}>
+              Tem certeza que deseja excluir esta análise? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-gray-400 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteAnalysis}
+                disabled={isDeleting}
+                className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                style={{ backgroundColor: '#dc2626' }}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader />
+                    Excluindo...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Excluir
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

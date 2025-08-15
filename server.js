@@ -4,8 +4,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, ScanCommand } from '@aws-sdk/lib-dynamodb';
-import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { DynamoDBDocumentClient, PutCommand, ScanCommand, DeleteCommand, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
@@ -174,8 +174,11 @@ app.get('/api/analyses', async (req, res) => {
         const command = new ScanCommand(params);
         const data = await ddbDocClient.send(command);
         
-        // Generate presigned URLs for images
+        // Generate presigned URLs for images and map fields
         for (const item of data.Items) {
+            // Map analysisId to id for frontend consistency
+            item.id = item.analysisId;
+            
             if (item.s3Key) {
                 const command = new GetObjectCommand({ Bucket: s3BucketName, Key: item.s3Key });
                 item.imageUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // URL expires in 1 hour
@@ -238,6 +241,63 @@ app.post('/api/analyses', upload.single('imageFile'), async (req, res) => {
     } catch (error) {
         logError(`Error saving analysis to DynamoDB: ${error.message}`);
         res.status(500).json({ error: 'Failed to save analysis' });
+    }
+});
+
+// API endpoint to delete an analysis
+app.delete('/api/analyses/:id', async (req, res) => {
+    const analysisId = req.params.id;
+    
+    if (!analysisId) {
+        return res.status(400).json({ error: 'Analysis ID is required' });
+    }
+
+    try {
+        // First, get the analysis to check if it has an S3 image
+        const getParams = {
+            TableName: dynamoDbTableName,
+            Key: {
+                analysisId: analysisId
+            }
+        };
+
+        const getCommand = new GetCommand(getParams);
+        const analysisData = await ddbDocClient.send(getCommand);
+
+        if (!analysisData.Item) {
+            return res.status(404).json({ error: 'Analysis not found' });
+        }
+
+        // Delete image from S3 if it exists
+        if (analysisData.Item.s3Key) {
+            const s3DeleteParams = {
+                Bucket: s3BucketName,
+                Key: analysisData.Item.s3Key
+            };
+            try {
+                const s3DeleteCommand = new DeleteObjectCommand(s3DeleteParams);
+                await s3Client.send(s3DeleteCommand);
+            } catch (s3Error) {
+                logError(`Error deleting image from S3: ${s3Error.message}`);
+                // Continue with DynamoDB deletion even if S3 deletion fails
+            }
+        }
+
+        // Delete analysis from DynamoDB
+        const deleteParams = {
+            TableName: dynamoDbTableName,
+            Key: {
+                analysisId: analysisId
+            }
+        };
+
+        const deleteCommand = new DeleteCommand(deleteParams);
+        await ddbDocClient.send(deleteCommand);
+
+        res.json({ message: 'Analysis deleted successfully' });
+    } catch (error) {
+        logError(`Error deleting analysis: ${error.message}`);
+        res.status(500).json({ error: 'Failed to delete analysis' });
     }
 });
 
