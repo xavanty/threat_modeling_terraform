@@ -4,6 +4,7 @@ npm-debug.log
 .gitignore
 README.md
 .env
+.env.local
 .nyc_output
 coverage
 .nyc_output
@@ -13,3 +14,27 @@ dist
 .terraform
 terraform.tfstate*
 .github
+
+# Zone Identifier files (Windows)
+*.Zone.Identifier
+
+# Backup and temporary files
+.dockerignorebk
+error.log
+*.log
+
+# Development scripts
+deploy-manual.sh
+setup-local-env.sh
+docker-compose.yml
+
+# Large image assets (not needed in container - keep cielo_NEG_RGB-01.png which is used)
+cielo_NEG_RGB-02.png
+cielo_NEG_RGB-03.png
+
+# Infrastructure and AWS configs
+aws/
+terraform/
+
+# Development metadata
+metadata.json
